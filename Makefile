@@ -3,7 +3,7 @@ CC = gcc
 SOURCE = $(wildcard ./source/*.c)
 INCLUDE_DIRS = -I./SDL2/include
 LIB_DIRS = -L./SDL2/lib
-SDL2_LIBS = -lmingw32 -lSDL2main -lSDL2
+SDL2_LIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_mixer -lSDL2_net -lSDL2_ttf
 
 # Specify building directory
 BUILD_DIR = build
