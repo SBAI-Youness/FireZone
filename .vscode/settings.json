@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "sdl_ui.h": "c",
+        "algorithm": "c",
+        "functional": "c",
+        "optional": "c",
+        "system_error": "c",
+        "type_traits": "c",
+        "xtr1common": "c",
+        "xutility": "c"
+    }
+}
