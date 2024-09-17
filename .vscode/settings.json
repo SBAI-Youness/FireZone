@@ -7,6 +7,7 @@
         "system_error": "c",
         "type_traits": "c",
         "xtr1common": "c",
-        "xutility": "c"
+        "xutility": "c",
+        "game_config.h": "c"
     }
 }

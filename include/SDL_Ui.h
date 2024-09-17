@@ -83,11 +83,14 @@ typedef struct ProgressBar {
     UIElement element;
     int max_value;
     int current_value;
-    SDL_Color bg_color;
-    SDL_Color fill_color;
+    SDL_Color bg_color;             
+    SDL_Color fill_color;        
+    SDL_Texture *fill_texture;
+    SDL_Rect texture_rect;
 } ProgressBar;
 
-ProgressBar *progress_bar_create(int x, int y, int w, int h, int max_value, SDL_Color bg_color, SDL_Color fill_color, SDL_Renderer *renderer);
+
+ProgressBar *progress_bar_create(int x, int y, int w, int h, int max_value, SDL_Color bg_color, SDL_Color fill_color, SDL_Texture *fill_texture);
 void progress_bar_draw(UIElement *element, SDL_Renderer *renderer);
 void progress_bar_set_value(ProgressBar *progress_bar, int value);
 

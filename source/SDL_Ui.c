@@ -92,9 +92,11 @@ Button *button_create(int x, int y, int w, int h, const char *text, const char *
     button->hovered = 0;
     button->on_click = NULL;
 
-    SDL_Surface *text_surface = TTF_RenderText_Solid(font, text, color);
+    SDL_Surface *text_surface = TTF_RenderText_Blended(font, text, color);
     button->text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
     SDL_FreeSurface(text_surface);
+
+    SDL_SetTextureBlendMode(button->text_texture, SDL_BLENDMODE_BLEND);
 
     if (icon_path) {
         SDL_Surface *icon_surface = IMG_Load(icon_path);
@@ -123,18 +125,21 @@ void button_draw(UIElement *element, SDL_Renderer *renderer) {
         button->hovered ? button->hover_color.g : button->color.g,
         button->hovered ? button->hover_color.b : button->color.b,
         255);
-    SDL_RenderFillRect(renderer, &button->element.rect);
+    
+    if(!button->icon_texture)
+        SDL_RenderFillRect(renderer, &button->element.rect);
 
     if (button->icon_texture) {
         int icon_w, icon_h;
         SDL_QueryTexture(button->icon_texture, NULL, NULL, &icon_w, &icon_h);
-        SDL_Rect icon_rect = { button->element.rect.x + 10, button->element.rect.y + (button->element.rect.h - icon_h) / 2, icon_w, icon_h };
+        SDL_Rect icon_rect = { button->element.rect.x , button->element.rect.y + (button->element.rect.h - icon_h) / 2, icon_w, icon_h };
         SDL_RenderCopy(renderer, button->icon_texture, NULL, &icon_rect);
     }
 
     if (button->text_texture) {
         int text_w, text_h;
         SDL_QueryTexture(button->text_texture, NULL, NULL, &text_w, &text_h);
+        SDL_SetTextureColorMod(button->text_texture, button->hovered ? button->color.r : button->hover_color.r,button->hovered ? button->color.g : button->hover_color.g,button->hovered ? button->color.b : button->hover_color.b);
         SDL_Rect dstrect = { button->element.rect.x + (button->element.rect.w - text_w) / 2,
                              button->element.rect.y + (button->element.rect.h - text_h) / 2,
                              text_w, text_h };
@@ -172,7 +177,7 @@ TextButton *text_button_create(int x, int y, const char *text, SDL_Color normal_
     button->hovered = 0;
     button->on_click = NULL;
 
-    SDL_Surface *text_surface = TTF_RenderText_Solid(font, text, normal_color);
+    SDL_Surface *text_surface = TTF_RenderText_Blended(font, text, normal_color);
     button->text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
     SDL_FreeSurface(text_surface);
 
@@ -267,17 +272,22 @@ void slider_handle_event(UIElement *element, SDL_Event *event) {
     }
 }
 
-ProgressBar *progress_bar_create(int x, int y, int w, int h, int max_value, SDL_Color bg_color, SDL_Color fill_color, SDL_Renderer *renderer) {
+ProgressBar *progress_bar_create(int x, int y, int w, int h, int max_value, SDL_Color bg_color, SDL_Color fill_color, SDL_Texture *fill_texture) {
     ProgressBar *progress_bar = (ProgressBar *)malloc(sizeof(ProgressBar));
     ui_element_init(&progress_bar->element, x, y, w, h);
     progress_bar->max_value = max_value;
     progress_bar->current_value = 0;
     progress_bar->bg_color = bg_color;
-    progress_bar->fill_color = fill_color;
+    progress_bar->fill_texture = fill_texture;
+
+    SDL_QueryTexture(fill_texture, NULL, NULL, &progress_bar->texture_rect.w, &progress_bar->texture_rect.h);
+    progress_bar->texture_rect.x = 0;
+    progress_bar->texture_rect.y = 0;
 
     progress_bar->element.draw = (void (*)(struct UIElement *, SDL_Renderer *))progress_bar_draw;
     return progress_bar;
 }
+
 
 void progress_bar_draw(UIElement *element, SDL_Renderer *renderer) {
     ProgressBar *progress_bar = (ProgressBar *)element;
@@ -287,9 +297,16 @@ void progress_bar_draw(UIElement *element, SDL_Renderer *renderer) {
 
     int fill_width = progress_bar->current_value * progress_bar->element.rect.w / progress_bar->max_value;
     SDL_Rect fill_rect = { progress_bar->element.rect.x, progress_bar->element.rect.y, fill_width, progress_bar->element.rect.h };
-    SDL_SetRenderDrawColor(renderer, progress_bar->fill_color.r, progress_bar->fill_color.g, progress_bar->fill_color.b, 255);
-    SDL_RenderFillRect(renderer, &fill_rect);
+
+    if (progress_bar->fill_texture != NULL) {
+        SDL_Rect src_rect = { 0, 0, fill_width, progress_bar->texture_rect.h };
+        SDL_RenderCopy(renderer, progress_bar->fill_texture, &src_rect, &fill_rect);
+    } else {
+        SDL_SetRenderDrawColor(renderer, progress_bar->fill_color.r, progress_bar->fill_color.g, progress_bar->fill_color.b, 255);
+        SDL_RenderFillRect(renderer, &fill_rect);
+    }
 }
+
 
 void progress_bar_set_value(ProgressBar *progress_bar, int value) {
     progress_bar->current_value = value;
@@ -306,7 +323,7 @@ Tooltip *tooltip_create(int x, int y, int w, int h, const char *text, SDL_Color 
     tooltip->text_color = text_color;
     tooltip->visible = 0;
 
-    SDL_Surface *surface = TTF_RenderText_Solid(font, text, text_color);
+    SDL_Surface *surface = TTF_RenderText_Blended(font, text, text_color);
     tooltip->text_texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
 
